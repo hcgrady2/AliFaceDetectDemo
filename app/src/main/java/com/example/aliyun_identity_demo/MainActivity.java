@@ -20,12 +20,17 @@ import com.aliyun.identity.platform.api.IdentityPlatform;
 import com.aliyun.identity.platform.api.IdentityResponse;
 import com.aliyun.identity.platform.api.IdentityResponseCode;
 import com.aliyun.identity.platform.log.xLogger;
+import com.example.aliyun_identity_demo.net.NormalNetUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import okhttp3.Call;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -139,5 +144,44 @@ public class MainActivity extends AppCompatActivity {
 
             Log.d(LOG_TAG, "Ppermissions not granted: " + unGrantedPermissions.toString());
         }
+    }
+
+    public void OnNetClick(View view) {
+
+        Map<String,String> parmas =new HashMap<>();
+//
+//        NormalNetUtils.getInstance().postDataAsynToNet("", parmas, new NormalNetUtils.MyNetCall() {
+//            @Override
+//            public void success(Call call, Response response) throws IOException {
+//                Log.i("whcTag", "success: ");
+//            }
+//
+//            @Override
+//            public void failed(Call call, IOException e) {
+//                Log.i("whcTag", "failed: ");
+//            }
+//        });
+//
+
+        NormalNetUtils.getInstance().getDataAsynFromNet("https://www.baidu.com", new NormalNetUtils.MyNetCall() {
+            @Override
+            public void success(Call call, Response response) throws IOException {
+                Log.i("whcTag", "success: " + response.body().string());
+
+            }
+
+            @Override
+            public void failed(Call call, IOException e) {
+                Log.i("whcTag", "failed: " + e.toString());
+
+            }
+        });
+
+
+
+
+
+
+
     }
 }
