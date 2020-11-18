@@ -18,22 +18,47 @@
         tools:layout_editor_absoluteY="217dp" />
 
 
-    <Button
-        android:id="@+id/btn_net"
+
+    <LinearLayout
+        android:id="@+id/ll_net"
         app:layout_constraintTop_toBottomOf="@id/btnAliyunIdentity"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginTop="20dp"
-        android:text="网络请求"
-        android:onClick="OnNetClick"
-        android:layout_width="wrap_content"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_height="wrap_content"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+
+        <Button
+            android:id="@+id/btn_id"
+            android:text="开始认证"
+            android:onClick="OnNetClick"
+            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="10dp"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_height="wrap_content"/>
+
+
+        <Button
+            android:id="@+id/btn_verify"
+            android:text="查询认证结果"
+            android:onClick="OnNetVerify"
+            android:layout_marginHorizontal="10dp"
+            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_height="wrap_content"/>
+
+
+
+
+    </LinearLayout>
 
 
     <Button
         android:id="@+id/btn_take_photo"
         android:text="拍照"
-        app:layout_constraintTop_toBottomOf="@id/btn_net"
+        app:layout_constraintTop_toBottomOf="@id/ll_net"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_width="wrap_content"

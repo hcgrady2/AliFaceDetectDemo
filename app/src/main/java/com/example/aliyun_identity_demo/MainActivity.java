@@ -35,6 +35,9 @@ import com.example.aliyun_identity_demo.net.NormalNetUtils;
 import com.example.aliyun_identity_demo.util.ImageUtil;
 import com.example.aliyun_identity_demo.util.PhotoBitmapUtil;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -68,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
 
     String mCameraImagePath = "";
 
+    String metaInfo;
+
+    public       String     certifyId = "";
 
     // 将metaInfo发送到业务自己的服务器端，服务器端调用阿里云相关接口拿到certifyId，再返回给客户端。
     // 注意：一个certifyId只能调用一次认证服务。
@@ -82,7 +88,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        // 获取metaInfo，发送到业务自己服务器端换取certifyId
+         metaInfo = IdentityPlatform.getMetaInfo(MainActivity.this);
         // 获取摄像头等权限
         handlePermissions();
 
@@ -210,49 +217,54 @@ public class MainActivity extends AppCompatActivity {
         //  /common/aliyun/describeSmartVerify（获取是否成功接口）
         //  参数：String certifyId
 
-        // 获取metaInfo，发送到业务自己服务器端换取certifyId
-        String metaInfo = IdentityPlatform.getMetaInfo(MainActivity.this);
 
-       String url = "http://10.10.130.151:8590/common/aliyun/initSmartVerify" ;
+        Log.i("whcTag", "OnNetClick: 准备获取 base64 ");
+
+
+        String url = "http://10.10.130.151:8590/common/aliyun/initSmartVerify" ;
+        String imgStr = ImageUtil.imageToBase64(mCameraImagePath);
 
         Map<String,String> parmas =new HashMap<>();
         parmas.put("metaInfo",metaInfo);
-//
-//        NormalNetUtils.getInstance().getDataAsynFromNet("https://www.baidu.com", new NormalNetUtils.MyNetCall() {
-//            @Override
-//            public void success(Call call, Response response) throws IOException {
-//                Log.i("whcTag", "success: " + response.body().string());
-//            }
-//
-//            @Override
-//            public void failed(Call call, IOException e) {
-//
-//            }
-//        });
+        parmas.put("facePictureBase64",imgStr);
 
+        Log.i("whcTag", "OnNetClick: 准备开始网络请求 ");
 
+        String result = "        {\"ret\":\"5805a520448100a20473ab48372560b6\",\"message\":\"\",\"code\":0}\n";
+        // 将metaInfo发送到业务自己服务器端换取certifyId
 
-//        NormalNetUtils.getInstance().getDataAsynFromNet(url, new NormalNetUtils.MyNetCall() {
-//            @Override
-//            public void success(Call call, Response response) throws IOException {
-//
-//            }
-//
-//            @Override
-//            public void failed(Call call, IOException e) {
-//
-//            }
-//        });
+        try {
+            JSONObject jsonObject = new JSONObject(result);
+
+            certifyId = jsonObject.getString("ret");
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
 
         NormalNetUtils.getInstance().postDataAsynToNet(url, parmas, new NormalNetUtils.MyNetCall() {
             @Override
             public void success(Call call, Response response) throws IOException {
-                Log.i("whcTag", "success: " + response.body().string());
 
+                final String result = response.body().string();
+                //{"ret":"5805a520448100a20473ab48372560b6","message":"","code":0}
                 // 将metaInfo发送到业务自己服务器端换取certifyId
-                String certifyId = "";
 
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+
+                    certifyId = jsonObject.getString("ret");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                if (TextUtils.isEmpty(certifyId)){
+                    return;
+                }
+
+                Log.i("whcTag", "success:  获取的 id 是 ：" + certifyId);
                 // 开始验证
                 IdentityPlatform.getInstance().faceDetect(certifyId, null, new IdentityCallback() {
                     @Override
@@ -265,6 +277,8 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this,
                                     "认证失败([" + response.code + "]" + response.message + ")",
                                     Toast.LENGTH_LONG).show();
+
+                            Log.i("whcTag", "response:  code :" + response.code +  " msg:" + response.message);
                         }
 
                         return true;
@@ -279,6 +293,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("whcTag", "failed: ");
             }
         });
+
+
+
 
 
     }
@@ -375,4 +392,47 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void OnNetVerify(View view) {
+
+        ///common/aliyun/initSmartVerify（初始接口）
+        //  参数：String metaInfo
+        //
+        //
+        //  /common/aliyun/describeSmartVerify（获取是否成功接口）
+        //  参数：String certifyId
+
+
+
+        if (TextUtils.isEmpty(certifyId)){
+            Toast.makeText(MainActivity.this,"ceritfyId 不能为空",Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String url = "http://10.10.130.151:8590/common/aliyun/describeSmartVerify" ;
+
+        Map<String,String> parmas =new HashMap<>();
+        parmas.put("certifyId",certifyId);
+
+
+        NormalNetUtils.getInstance().postDataAsynToNet(url, parmas, new NormalNetUtils.MyNetCall() {
+            @Override
+            public void success(Call call, Response response) throws IOException {
+
+                final String result = response.body().string();
+
+
+                Log.i("whcTag", " 查询认证结果  success: result: " + result);
+
+
+            }
+
+            @Override
+            public void failed(Call call, IOException e) {
+                Log.i("whcTag", "查询认证结果 ： failed: ");
+            }
+        });
+
+
+
+    }
 }
