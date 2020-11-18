@@ -16,11 +16,14 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         // certifyId = parseResponse();
         return certifyId;
     }
+    public  Handler sHandler = new Handler(Looper.getMainLooper());
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
      * 处理权限问题
      */
     private void handlePermissions() {
+        Log.d("AliyunIdentity", "handlePermissions: ");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             List<String> requestPerms = genUnGrantedToygerPermissions();
             if (requestPerms.size() > 0) {
@@ -265,6 +271,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 Log.i("whcTag", "success:  获取的 id 是 ：" + certifyId);
+                //重复使用 id :  code :1002 msg:NET_RESPONSE_INVALID
                 // 开始验证
                 IdentityPlatform.getInstance().faceDetect(certifyId, null, new IdentityCallback() {
                     @Override
@@ -291,7 +298,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void failed(Call call, IOException e) {
                 Log.i("whcTag", "failed: ");
-            }
+                sHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"服务器错误",Toast.LENGTH_SHORT).show();
+                    }
+                });            }
         });
 
 
@@ -369,6 +381,13 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == CAMERA_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
 
+                File imgFie = new File(mCameraImagePath);
+
+                if (!imgFie.exists()){
+                    Toast.makeText(MainActivity.this,"拍照失败",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Bitmap bm = PhotoBitmapUtil.rotaingImageView(mCameraImagePath, BitmapFactory.decodeFile(mCameraImagePath)) ;
 
                 // 使用图片路径加载
@@ -421,6 +440,48 @@ public class MainActivity extends AppCompatActivity {
                 final String result = response.body().string();
 
 
+
+                //{"code":0,"message":""}
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+
+                    int code  = jsonObject.getInt("code");
+
+
+
+
+
+                    if (code == 0){
+                        sHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"认证已经通过!",Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }else {
+                        sHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"认证没有通过!",Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+
+
+
+
+
+
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+
+
                 Log.i("whcTag", " 查询认证结果  success: result: " + result);
 
 
@@ -429,6 +490,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void failed(Call call, IOException e) {
                 Log.i("whcTag", "查询认证结果 ： failed: ");
+                sHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,"服务器错误",Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
 

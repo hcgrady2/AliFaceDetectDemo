@@ -35,7 +35,7 @@ public class ImageUtil {
         InputStream is = null;
         byte[] data = null;
         StringBuilder result = new StringBuilder();
-        result.append("data:image/jpg;base64,");
+       // result.append("data:image/jpg;base64,");
         try {
             is = new FileInputStream(path);
             //创建一个字符流大小的数组。
